@@ -102,7 +102,7 @@ def get_PCA(X_train, alpha):
 ---
 
 ```python
-def PCA_Projection(mean_face,eigenfaces):
+def PCA_Projected_data(mean_face,eigenfaces):
     X_train_centered = X_train - mean_face
     X_train_projected = X_train_centered @ eigenfaces
     X_test_centered = X_test - mean_face
@@ -121,7 +121,7 @@ def PCA_Projection(mean_face,eigenfaces):
 ```python
 def Test_PCA(alpha, k):
     mean_face, eigenfaces = get_PCA(X_train, alpha)
-    X_train_pca, X_test_pca = PCA_Projection(mean_face, eigenfaces)
+    X_train_pca, X_test_pca = PCA_Projected_data(mean_face, eigenfaces)
     knn = KNeighborsClassifier(k, weights="distance")
     knn.fit(X_train_pca, y_train.ravel())
     y_pred = knn.predict(X_test_pca)
@@ -211,6 +211,37 @@ def get_LDA(X_train):
 
     return projection_matrix
 ```
+
+#### Projecting The Train Data and Test Data using the Same Projection Matrix
+
+---
+
+```python
+def LDA_projected_data(projection_matrix):
+    projected_X_train = np.dot(X_train, projection_matrix)
+    projected_X_test = np.dot(X_test, projection_matrix)
+    return projected_X_train, projected_X_test
+```
+
+#### Using KNN with K=1 as a classifier
+
+---
+
+- The Classifier is trained with the projected training data using **knn.fit()**
+- Then the classifier is given the projected test data and the predicted values (labels) are saved in **Y_pred**
+- The y_pred is compared with the y_test to get accuracy (actual labels)
+
+```python
+def Test_LDA(k):
+    projected_X_train, projected_X_test = LDA_projected_data(LDA_projection_matrix)
+    knn = KNeighborsClassifier(n_neighbors=k)
+    knn.fit(projected_X_train, y_train.ravel())
+    y_pred = knn.predict(projected_X_test)
+    accuracy = accuracy_score(y_test, y_pred.ravel())
+    return accuracy
+```
+
+- LDA Accuracy for k = 1 is **95%**
 
 ## Classifier Tunning (Hyperparameter Tuning for K in KNN)
 
