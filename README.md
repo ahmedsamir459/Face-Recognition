@@ -346,3 +346,206 @@ def Test_LDA(k):
 - This regularization is particularly useful when dealing with high-dimensional data, as it helps to overcome the small sample size problem by stabilizing the covariance estimates. Shrinkage LDA has been shown to outperform traditional LDA in terms of classification accuracy, especially when the number of features is much larger than the number of observations.
 
 - Another advantage of shrinkage LDA is that it can handle multicollinearity between the predictor variables, which can be a problem in standard LDA when the predictors are highly correlated. In summary, shrinkage LDA is a powerful tool for classification and dimensionality reduction that can improve the accuracy of LDA in high-dimensional and small sample size settings.
+
+
+# Face vs. Non-Face Classification using PCA and LDA
+
+## Introduction
+
+This documentation outlines the implementation of Principal Component Analysis (PCA) and Linear Discriminant Analysis (LDA) for the task of classifying face and non-face images. The goal is to explore the effectiveness of dimensionality reduction techniques and assess the model's performance. Comparing the impact of non-faces number in the accuracy of the model.
+
+
+## Implementation Details
+
+### Libraries Used
+- NumPy
+- Scikit-learn
+- Images
+
+### Data Preprocessing
+
+#### Non-Face Images
+1. Download a semi large dataset of non faces images (~550) sample.
+2. Loaded non-face images from the specified file paths.
+3. Convert images into gray scale
+4. Resized each image to 92x112 pixels.
+5. Flattened each image to a 1D array.
+
+#### Face Images
+1. Loaded face images from the specified file paths.
+2. Resized each image to 92x112 pixels.
+3. Flattened each image to a 1D array.
+
+#### Labels
+1. Created binary labels (1 for faces, 0 for non-faces).
+
+#### Shuffle images within each class
+1. shuffle face images and thier labels
+2. shuffle non_faces images and thier labels
+
+
+### Data Splitting
+1. Split the data into training and testing sets using `split_data`.
+2. Combined face and non-face data.
+3. Re-shuffle the combined dataset 
+
+-code 
+
+```python
+def split_data(faces, faces_labels, non_faces,non_faces_labels,non_faces_count,alpha,non_face_precentage_in_train=1):
+    if alpha == 0.5:
+        faces_train = faces[::2]
+        faces_train_labels = faces_labels[::2]
+        faces_test = faces[1::2]
+        faces_test_labels = faces_labels[1::2]
+        non_faces_train = non_faces[:int(non_faces_count*non_face_precentage_in_train):2]
+        non_faces_train_labels = non_faces_labels[:int(non_faces_count*non_face_precentage_in_train):2]
+        non_faces_test = non_faces[1:non_faces_count:2]
+        non_faces_test_labels = non_faces_labels[1:non_faces_count:2]
+    else:
+        n = len(faces)
+        n_train = int(n*alpha)
+        idx = np.random.permutation(n)
+        train_idx = idx[:n_train]
+        test_idx = idx[n_train:]
+        faces_train = faces[train_idx]
+        faces_train_labels = faces_labels[train_idx]
+        faces_test = faces[test_idx]
+        faces_test_labels = faces_labels[test_idx]
+        n = non_faces_count
+        n_train = int(n*alpha)
+        idx = np.random.permutation(n)
+        train_idx = idx[:n_train]
+        test_idx = idx[n_train:]
+        non_faces_train = non_faces[train_idx]
+        non_faces_train_labels = non_faces_labels[train_idx]
+        non_faces_test = non_faces[test_idx]
+        non_faces_test_labels = non_faces_labels[test_idx]
+    
+    return np.append(faces_train, non_faces_train, axis=0), np.append(faces_train_labels, non_faces_train_labels, axis=0), np.append(faces_test, non_faces_test, axis=0), np.append(faces_test_labels, non_faces_test_labels, axis=0)
+
+```
+
+- sample of training set
+![alt text](images/trainplot.png)
+- sample of test set
+![alt text](images/image-2.png)
+
+
+### Dimensionality Reduction: PCA
+
+1. Applied PCA for dimensionality reduction.
+2. Explored the variance explained by different components.
+3. Transformed both training and testing data using the selected number of components.
+4. Use the most efficient alpha value from the first part `0.85`.
+
+- code 
+    ```python
+    def PCA(train_data,alpha=0.85):
+        mean = np.mean(train_data, axis=0)
+        centered_data = train_data - mean
+        cov_matrix = np.dot(centered_data,centered_data.T)
+        eig_values, eig_vectors = np.linalg.eigh(cov_matrix)
+        idx = np.argsort(eig_values)[::-1]
+        eig_values = eig_values[idx]
+        eig_vectors = eig_vectors[:,idx]
+        eig_vectors = np.dot(centered_data.T,eig_vectors)
+        for i in range(eig_vectors.shape[1]):
+            eig_vectors[:,i] = eig_vectors[:,i]/np.linalg.norm(eig_vectors[:,i])
+        total = np.sum(eig_values)
+        k = 0
+        var = 0
+        while var/total < alpha:
+            var += eig_values[k]
+            k += 1
+        return eig_vectors[:,:k], mean
+
+    def project_data(data, eigenvectors, mean,):
+        return np.dot(data - mean, eigenvectors)
+    ```
+### Dimensionality Reduction: LDA
+
+1. Applied LDA for dimensionality reduction.
+2. Use only one dominant eigenvector as we have only two classes.
+3. Transformed both training and testing data using the selected number of components.
+
+- code 
+    ```python
+    def LDA (train_data, train_labels, k=1):]
+        mean1 = np.mean(train_data[train_labels.ravel() == 1], axis=0)
+        mean0 = np.mean(train_data[train_labels.ravel() == 0], axis=0)
+
+        Sw = np.dot((train_data[train_labels.ravel() == 1] - mean1).T, 
+                    (train_data[train_labels.ravel() == 1] - mean1)) 
+                + np.dot((train_data[train_labels.ravel() == 0] - mean0).T, 
+                            (train_data[train_labels.ravel() == 0] - mean0))
+        Sb = np.dot((mean1 - mean0).reshape(-1,1), (mean1 - mean0).reshape(-1,1).T)
+
+        eig_values, eig_vectors = np.linalg.eigh(np.dot(np.linalg.inv(Sw), Sb))
+        eig_values = np.real( eig_values)
+        eig_vectors = np.real( eig_vectors)
+        idx = np.argsort(eig_values)[::-1]
+        eig_values = eig_values[idx]
+        eig_vectors = eig_vectors[:,idx]
+        return eig_vectors[:,:k]
+    ```
+
+### Model Training and Evaluation
+
+1. Use KNN for training and evaluation, and stick to `k=1` for training and `weight='distance'`, so it weight points by the inverse of their distance.
+2. Trained the model using the transformed data.
+3. Evaluated the model using accuracy.
+
+- code 
+    ```python
+    def knn_classifier(train_data, train_labels, test_data, test_labels, k=1):
+        knn = KNeighborsClassifier( n_neighbors=1, weights='distance')
+        knn.fit( train_data, train_labels.ravel() )
+        return accuracy_score(test_labels, knn.predict(test_data).ravel()),knn.predict(test_data).ravel()
+
+    ```
+### Results
+
+#### PCA Results
+
+- On average it takes **`41` components** to retain 85.0% of the variance.
+- On average the **accuracy** of the model is about **`94.5%`**.
+- The maximum accuracy of the model is
+
+    ![alt text](images/image-7.png)
+
+#### LDA Results
+
+- Only use one of dominant eigenvectors.
+- On average the **accuracy** of the model is about **`80%`**.
+
+### Visualizing Results and Comparisons
+
+#### Showed failure and success cases with visualizations.
+- **For PCA**
+
+    ![alt text](images/image-4.png)
+- **For LDA**
+
+    ![alt text](images/image-5.png)
+
+
+#### Plotted accuracy vs the number of non-face images while fixing the number of face images.
+- **For PCA**
+
+    ![alt text](images/image-6.png)
+- **For LDA**
+
+    ![alt text](images/ldacurve.png)
+
+    While the number of non faces images increases the accuracy of the model decreases as it biased to recognize face images as non-face images. Also due to the increase of the data, the number of points increases and the gap between classes decreases so it make some noise and confusion for the classifier.
+
+#### Criticize the accuracy measure for large numbers of non-faces images in the training data.
+- **For PCA** 
+
+    ![alt text](images/image-3.png)
+- **For LDA**
+
+    ![alt text](images/image-8.png)
+
+    while the number of non-faces images in the training set increases the accuracy of the model increases as the number of non-faces images in the the test set fixed. So the model train on a lower number of non-faces images accoring to the test ones. 
