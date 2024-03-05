@@ -214,7 +214,7 @@ def get_LDA(X_train):
 
 ## Classifier Tunning (Hyperparameter Tuning for K in KNN)
 
-### The tie breaking is done by choosing the least distance (weight = "distance")
+### The tie breaking is done by choosing the least distance (weights = "distance")
 
 - PCA
 <div>
