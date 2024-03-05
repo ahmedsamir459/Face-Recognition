@@ -1,4 +1,4 @@
-# **Face Recognition Using PCA & LDA Algorithms for Dimensionality Reduction**
+# **Face Recognition Using PCA & LDA Algorithms for Dimensionality Reduction (Eigen Faces)**
 
 ## PCA
 Principal Component Analysis (PCA) is a dimensionality reduction technique that is used to extract important features from high-dimensional datasets. PCA works by identifying the principal components of the data, which are linear combinations of the original features that capture the most variation in the data
