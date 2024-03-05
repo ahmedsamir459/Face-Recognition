@@ -6,6 +6,13 @@ Principal Component Analysis (PCA) is a dimensionality reduction technique that 
 ## LDA
 Linear Discriminant Analysis (LDA) is a dimensionality reduction technique that is used to reduce the number of features in a dataset while maintaining the class separability. LDA is a supervised technique, meaning that it uses the class labels to perform the dimensionality reduction. LDA is a popular technique for dimensionality reduction in the field of pattern recognition and machine learning
 
+## Dataset
+- The dataset for this project is the [AT&T Face Database](https://www.kaggle.com/datasets/kasikrit/att-database-of-faces)
+- The dataset is open-source and can be downloaded from Kaggle.
+- The dataset contains 400 images of 40 people, each person has 10 images.
+- The images are of size 92x112 pixels & in grayscale.
+- The images are stored in the `datasets/faces` folder.
+
 
 ### Generating the Data Matrix and the Label vector
 
