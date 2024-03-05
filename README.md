@@ -1,9 +1,12 @@
 # **Face Recognition Using PCA & LDA Algorithms for Dimensionality Reduction**
 
 ### Generating the Data Matrix and the Label vector
-___
+
+---
+
 - The Data Matrix is 400 x 10304 where each image is flattened in a vector and saved as a row in the Matrix
 - Each 10 images of a person are given the same label from [1:40]
+
 ```python
 paths = ["datasets/s" + str(i) for i in range(1, 41)]
 cnt = 0
@@ -20,24 +23,26 @@ for path in paths:
         Data[cnt] = np_img
         cnt += 1
 ```
+
 ### Spliting the Dataset into Training and Test sets
-___
+
+---
+
 - Keeping the odd rows (assuming row[0] is the odd) for Training and the even rows (assuming row[1] is even) for Testing
+
 ```python
 X_train = Data[0::2]
 X_test = Data[1::2]
 y_train = labels[0::2]
 y_test = labels[1::2]
 ```
-### Classification using PCA
-___
-**Trick to get eigen values/vectors from Cov Matrix** <br>
-1. The Cov Matrix is Computed as Z.T * Z (10304 x 10304) so getting the eigen values/vectors from this matrix requires too much time.
-2. Instead we computed Cov matrix as Z * Z.T, According to Linear Algebra the eigen values computed from this matrix is the same as the original one but takes only the first 200 (which covers over 99% of the total variance).
-3. Where the original eigen vectors are restored by this formula: ui=A*vi where ui is the original eigen vector (10304 x 1) and vi is the smaller one (200 x 1).
-4. It gives the same results and in lesser time. 
 
-#### pseudo code for PCA
+## PCA
+
+Principal Component Analysis (PCA) is a dimensionality reduction technique that is used to extract important features from high-dimensional datasets. PCA works by identifying the principal components of the data, which are linear combinations of the original features that capture the most variation in the data
+
+### pseudocode for PCA
+
 ```python
 def get_PCA(X_train, alpha):
     # Compute the mean of the training data
@@ -67,12 +72,24 @@ def get_PCA(X_train, alpha):
     # project the training data on the eigenfaces
     return  mean_face, eigenfaces[:, :no_components]
 ```
-### The First 5 eigen faces
----
-![alt text](image.png)
 
-### Projecting The Train Data and Test Data using the Same Projection Matrix
-___
+**Trick to get eigen values/vectors from Cov Matrix** <br>
+
+1. The Cov Matrix is Computed as Z.T \* Z (10304 x 10304) so getting the eigen values/vectors from this matrix requires too much time.
+2. Instead we computed Cov matrix as Z \* Z.T, According to Linear Algebra the eigen values computed from this matrix is the same as the original one but takes only the first 200 (which covers over 99% of the total variance).
+3. Where the original eigen vectors are restored by this formula: ui=A\*vi where ui is the original eigen vector (10304 x 1) and vi is the smaller one (200 x 1).
+4. It gives the same results and in lesser time.
+
+#### The First 5 eigen faces
+
+---
+
+![alt text](images/image.png)
+
+#### Projecting The Train Data and Test Data using the Same Projection Matrix
+
+---
+
 ```python
 def PCA_Projection(mean_face,eigenfaces):
     X_train_centered = X_train - mean_face
@@ -81,11 +98,15 @@ def PCA_Projection(mean_face,eigenfaces):
     X_test_projected = X_test_centered @ eigenfaces
     return X_train_projected, X_test_projected
 ```
-### Using KNN with K=1 as a classifier
-___
+
+#### Using KNN with K=1 as a classifier
+
+---
+
 - The Classifier is trained with the projected training data using **knn.fit()**
 - Then the classifier is given the projected test data and the predicted values (labels) are saved in **Y_pred**
 - The y_pred is compared with the y_test to get accuracy (actual labels)
+
 ```python
 def Test_PCA(alpha, k):
     mean_face, eigenfaces = get_PCA(X_train, alpha)
@@ -96,8 +117,11 @@ def Test_PCA(alpha, k):
     accuracy = accuracy_score(y_test, y_pred.ravel())
     return accuracy
 ```
-### The Accuracy of each value of alpha
-____
+
+#### The Accuracy for each value of alpha
+
+---
+
 <div>
 <table border="1" class="dataframe">
   <thead>
@@ -128,12 +152,61 @@ ____
 </div>
 
 - As alpha increases, the classification accuracy decreases due to overfitting and it is more sensitive to noises
-![alt text](image-1.png)
-## LDA
-### left to Aboelwafa
+  ![alt text](images/image-1.png)
 
-## Classifier Tunning
+## LDA
+
+Linear Discriminant Analysis (LDA) is a dimensionality reduction technique that is used to reduce the number of features in a dataset while maintaining the class separability. LDA is a supervised technique, meaning that it uses the class labels to perform the dimensionality reduction. LDA is a popular technique for dimensionality reduction in the field of pattern recognition and machine learning
+
+### pseudocode for LDA
+
+```python
+def get_LDA(X_train):
+
+    # Computing the overall mean
+    overall_mean = np.mean(X_train, axis=0).reshape(10304, 1)
+
+    # Computing the between-class & within-class scatter matrix
+    S_B = np.zeros((10304, 10304))
+    S_W = np.zeros((10304, 10304))
+
+    for i in range(1, 41):
+        # Computing the mean of each class
+        class_mean = np.mean(X_train[(i - 1) * 5 : i * 5], axis=0)
+
+        # Reshaping the mean to be a column vector
+        class_mean = class_mean.reshape(10304, 1)
+
+        # Computing the between-class scatter matrix by summing the outer products of the difference between the class mean and the overall mean
+        S_B += 5 * np.dot((class_mean - overall_mean), (class_mean - overall_mean).T)
+
+        # Computing the centered data
+        centered_data = X_train[(i - 1) * 5 : i * 5] - np.mean(
+            X_train[(i - 1) * 5 : i * 5], axis=0
+        )
+
+        # Computing the within-class scatter matrix by summing the outer products of the centered data
+        S_W += np.dot(centered_data.T, centered_data)
+
+    # Computing the total projection matrix
+    S = np.dot(np.linalg.inv(S_W), S_B)
+
+    # Computing the eigenvalues and eigenvectors
+    eigenvalues, eigenvectors = np.linalg.eigh(S)
+
+    idx = eigenvalues.argsort()[::-1]
+    sorted_eigenvectors = eigenvectors[:, idx]
+
+    # Taking only the dominant eigenvectors
+    projection_matrix = sorted_eigenvectors[:, :39]
+
+    return projection_matrix
+```
+
+## Classifier Tunning (Hyperparameter Tuning for K in KNN)
+
 ### The tie breaking is done by choosing the least distance (weight = "distance")
+
 - PCA
 <div>
 <table border="1" class="dataframe">
@@ -217,4 +290,3 @@ ____
   </tbody>
 </table>
 </div>
-
