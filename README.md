@@ -1,9 +1,9 @@
-# **Face Recognition**
+# **Face Recognition Using PCA & LDA Algorithms for Dimensionality Reduction**
 
-### **Generating the Data Matrix and the Label vector**
+### Generating the Data Matrix and the Label vector
 ___
-- #### The Data Matrix is 400 x 10304 where each image is flattened in a vector and saved as a row in the Matrix
-- #### Each 10 images of a person are given the same label from [1:40]
+- The Data Matrix is 400 x 10304 where each image is flattened in a vector and saved as a row in the Matrix
+- Each 10 images of a person are given the same label from [1:40]
 ```python
 paths = ["datasets/s" + str(i) for i in range(1, 41)]
 cnt = 0
@@ -20,23 +20,24 @@ for path in paths:
         Data[cnt] = np_img
         cnt += 1
 ```
-### **Spliting the Dataset into Training and Test sets**
+### Spliting the Dataset into Training and Test sets
 ___
-- #### Keeping the odd rows (assuming row[0] is the odd) for Training and the even rows (assuming row[1] is even) for Testing
+- Keeping the odd rows (assuming row[0] is the odd) for Training and the even rows (assuming row[1] is even) for Testing
 ```python
 X_train = Data[0::2]
 X_test = Data[1::2]
 y_train = labels[0::2]
 y_test = labels[1::2]
 ```
-### **Classification using PCA**
+### Classification using PCA
 ___
-- #### **Trick in getting eigen values/vectors from Cov Matrix**
-1. ##### The Cov Matrix is Computed as Z.T * Z (10304 x 10304) so getting the eigen values/vectors from this matrix requires too much time.
-2. ##### So instead we computed Cov matrix as Z * Z.T, According to Linear Algebra the eigen values computed from this matrix is the same as the original one but takes only the first 200 (which covers over 99% of the total variance).
-3. ##### Where the original eigen vectors are restored by this formula: ui=A*vi where ui is the original eigen vector (10304 x 1) and vi is the smaller one (200 x 1).
-4. ##### It gives the same results and in lesser time. 
-- #### pseudo code for PCA
+**Trick to get eigen values/vectors from Cov Matrix** <br>
+1. The Cov Matrix is Computed as Z.T * Z (10304 x 10304) so getting the eigen values/vectors from this matrix requires too much time.
+2. Instead we computed Cov matrix as Z * Z.T, According to Linear Algebra the eigen values computed from this matrix is the same as the original one but takes only the first 200 (which covers over 99% of the total variance).
+3. Where the original eigen vectors are restored by this formula: ui=A*vi where ui is the original eigen vector (10304 x 1) and vi is the smaller one (200 x 1).
+4. It gives the same results and in lesser time. 
+
+#### pseudo code for PCA
 ```python
 def get_PCA(X_train, alpha):
     # Compute the mean of the training data
@@ -66,9 +67,10 @@ def get_PCA(X_train, alpha):
     # project the training data on the eigenfaces
     return  mean_face, eigenfaces[:, :no_components]
 ```
-### The first 5 eigen faces (zombies)
+### The First 5 eigen faces
 ---
 ![alt text](image.png)
+
 ### Projecting The Train Data and Test Data using the Same Projection Matrix
 ___
 ```python
@@ -81,9 +83,9 @@ def PCA_Projection(mean_face,eigenfaces):
 ```
 ### Using KNN with K=1 as a classifier
 ___
-- #### The Classifier is trained with the projected training data using **knn.fit()**
-- #### Then the classifier is given the projected test data and the predicted values (labels) are saved in **Y_pred**
-- #### The y_pred is compared with the y_test (actual labels)
+- The Classifier is trained with the projected training data using **knn.fit()**
+- Then the classifier is given the projected test data and the predicted values (labels) are saved in **Y_pred**
+- The y_pred is compared with the y_test to get accuracy (actual labels)
 ```python
 def Test_PCA(alpha, k):
     mean_face, eigenfaces = get_PCA(X_train, alpha)
@@ -125,13 +127,13 @@ ____
 </table>
 </div>
 
-- #### as alpha increases, the classification accuracy decreases due to overfitting.
+- As alpha increases, the classification accuracy decreases due to overfitting and it is more sensitive to noises
 ![alt text](image-1.png)
 ## LDA
 ### left to Aboelwafa
 
 ## Classifier Tunning
-### The tie breaking is done by choosing the least distance
+### The tie breaking is done by choosing the least distance (weight = "distance")
 - PCA
 <div>
 <table border="1" class="dataframe">
