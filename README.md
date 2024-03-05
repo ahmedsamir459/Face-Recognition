@@ -1,5 +1,12 @@
 # **Face Recognition Using PCA & LDA Algorithms for Dimensionality Reduction**
 
+## PCA
+Principal Component Analysis (PCA) is a dimensionality reduction technique that is used to extract important features from high-dimensional datasets. PCA works by identifying the principal components of the data, which are linear combinations of the original features that capture the most variation in the data
+
+## LDA
+Linear Discriminant Analysis (LDA) is a dimensionality reduction technique that is used to reduce the number of features in a dataset while maintaining the class separability. LDA is a supervised technique, meaning that it uses the class labels to perform the dimensionality reduction. LDA is a popular technique for dimensionality reduction in the field of pattern recognition and machine learning
+
+
 ### Generating the Data Matrix and the Label vector
 
 ---
@@ -38,9 +45,6 @@ y_test = labels[1::2]
 ```
 
 ## PCA
-
-Principal Component Analysis (PCA) is a dimensionality reduction technique that is used to extract important features from high-dimensional datasets. PCA works by identifying the principal components of the data, which are linear combinations of the original features that capture the most variation in the data
-
 ### pseudocode for PCA
 
 ```python
@@ -155,8 +159,6 @@ def Test_PCA(alpha, k):
   ![alt text](images/image-1.png)
 
 ## LDA
-
-Linear Discriminant Analysis (LDA) is a dimensionality reduction technique that is used to reduce the number of features in a dataset while maintaining the class separability. LDA is a supervised technique, meaning that it uses the class labels to perform the dimensionality reduction. LDA is a popular technique for dimensionality reduction in the field of pattern recognition and machine learning
 
 ### pseudocode for LDA
 
