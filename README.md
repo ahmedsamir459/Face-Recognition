@@ -662,10 +662,7 @@ def split_data(faces, faces_labels, non_faces,non_faces_labels,non_faces_count,a
     while the number of non-faces images in the training set increases the accuracy of the model increases as the number of non-faces images in the the test set fixed. So the model train on a lower number of non-faces images accoring to the test ones. 
 
 ## Contributers
+
 - Mohamed Wael Mohamed
-<br>
-
 - Ahmed Samir Said
-<br>
-
-- Youssef Hossam Aboelwafa
+- Youssef Aboelwafa
