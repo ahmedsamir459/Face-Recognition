@@ -403,17 +403,6 @@ def split_data(data,labels):
 #### Comparison Between Ordinary Split and Train Split in PCA
 ---
 <div>
-<style scoped>
-    .dataframe tbody tr th:only-of-type {
-        vertical-align: middle;
-    }
-    .dataframe tbody tr th {
-        vertical-align: top;
-    }
-    .dataframe thead th {
-        text-align: right;
-    }
-</style>
 <table border="1" class="dataframe">
   <thead>
     <tr style="text-align: right;">
@@ -453,17 +442,6 @@ def split_data(data,labels):
 #### Comparison Between Ordinary Split and Train Split in LDA
 ---
 <div>
-<style scoped>
-    .dataframe tbody tr th:only-of-type {
-        vertical-align: middle;
-    }
-    .dataframe tbody tr th {
-        vertical-align: top;
-    }
-    .dataframe thead th {
-        text-align: right;
-    }
-</style>
 <table border="1" class="dataframe">
   <thead>
     <tr style="text-align: right;">
@@ -526,7 +504,6 @@ This documentation outlines the implementation of Principal Component Analysis (
 2. Combined face and non-face data.
 3. Re-shuffle the combined dataset 
 
--code 
 
 ```python
 def split_data(faces, faces_labels, non_faces,non_faces_labels,non_faces_count,alpha,non_face_precentage_in_train=1):
@@ -576,7 +553,6 @@ def split_data(faces, faces_labels, non_faces,non_faces_labels,non_faces_count,a
 3. Transformed both training and testing data using the selected number of components.
 4. Use the most efficient alpha value from the first part `0.85`.
 
-- code 
     ```python
     def PCA(train_data,alpha=0.85):
         mean = np.mean(train_data, axis=0)
@@ -606,7 +582,6 @@ def split_data(faces, faces_labels, non_faces,non_faces_labels,non_faces_count,a
 2. Use only one dominant eigenvector as we have only two classes.
 3. Transformed both training and testing data using the selected number of components.
 
-- code 
     ```python
     def LDA (train_data, train_labels, k=1):]
         mean1 = np.mean(train_data[train_labels.ravel() == 1], axis=0)
@@ -633,7 +608,6 @@ def split_data(faces, faces_labels, non_faces,non_faces_labels,non_faces_count,a
 2. Trained the model using the transformed data.
 3. Evaluated the model using accuracy.
 
-- code 
     ```python
     def knn_classifier(train_data, train_labels, test_data, test_labels, k=1):
         knn = KNeighborsClassifier( n_neighbors=1, weights='distance')
