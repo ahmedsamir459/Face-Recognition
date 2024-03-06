@@ -166,50 +166,50 @@ def Test_PCA(alpha, k):
   ![alt text](images/image-1.png)
 
 ## LDA
-
+- Introducing our second trick 
+- Regularization step: before computing the inverse of the S_W matrix we add a value of 1e-7 to the diagonal of the matrix.
+-It is a common practice when dealing with the inversion of matrices in the context of Linear Discriminant Analysis (LDA) or covariance matrices in general. It is often used to ensure numerical stability, especially when the matrices involved might be close to singular.
+`S_W += 1e-7 * np.identity(X_train.shape[1])`
 ### pseudocode for LDA
 
 ```python
-def get_LDA(X_train):
+def get_LDA(X_train, y_train):
+    y_train = np.squeeze(y_train)
+    class_means = np.array([np.mean(X_train[y_train == i], axis=0) for i in range(1, 41)])
+    class_sizes = np.array([np.sum(y_train == i) for i in range(1, 41)])
 
-    # Computing the overall mean
-    overall_mean = np.mean(X_train, axis=0).reshape(10304, 1)
+    # Compute overall mean
+    overall_mean = np.mean(X_train, axis=0)
 
-    # Computing the between-class & within-class scatter matrix
-    S_B = np.zeros((10304, 10304))
-    S_W = np.zeros((10304, 10304))
-
+    # Compute within-class scatter matrix
+    S_W = np.zeros((X_train.shape[1], X_train.shape[1]))
     for i in range(1, 41):
-        # Computing the mean of each class
-        class_mean = np.mean(X_train[(i - 1) * 5 : i * 5], axis=0)
+        # Use boolean index to select rows from X_train
+        class_data = X_train[y_train == i]
+        centered_data = class_data - class_means[i - 1]
+        S_W += np.dot(centered_data.T, centered_data) 
 
-        # Reshaping the mean to be a column vector
-        class_mean = class_mean.reshape(10304, 1)
+    # # Regularize S_W
+    S_W += 1e-7 * np.identity(X_train.shape[1])
 
-        # Computing the between-class scatter matrix by summing the outer products of the difference between the class mean and the overall mean
-        S_B += 5 * np.dot((class_mean - overall_mean), (class_mean - overall_mean).T)
+    # Compute between-class scatter matrix
+    S_B = np.zeros((X_train.shape[1], X_train.shape[1]))
+    for i in range(1, 41):
+        # Use boolean index to select rows from X_train
+        class_data = X_train[y_train == i]
+        class_diff = class_means[i - 1] - overall_mean
+        S_B += class_sizes[i - 1] * np.outer(class_diff, class_diff)
 
-        # Computing the centered data
-        centered_data = X_train[(i - 1) * 5 : i * 5] - np.mean(
-            X_train[(i - 1) * 5 : i * 5], axis=0
-        )
+    # Solve generalized eigenvalue problem
+    eigenvalues, eigenvectors = np.linalg.eig(np.dot(np.linalg.inv(S_W), S_B))
 
-        # Computing the within-class scatter matrix by summing the outer products of the centered data
-        S_W += np.dot(centered_data.T, centered_data)
-
-    # Computing the total projection matrix
-    S = np.dot(np.linalg.inv(S_W), S_B)
-
-    # Computing the eigenvalues and eigenvectors
-    eigenvalues, eigenvectors = np.linalg.eigh(S)
-
-    idx = eigenvalues.argsort()[::-1]
+    # Sort eigenvalues and eigenvectors
+    idx = np.argsort(eigenvalues)[::-1]
     sorted_eigenvectors = eigenvectors[:, idx]
 
-    # Taking only the dominant eigenvectors
+    # Take only the dominant eigenvectors
     projection_matrix = sorted_eigenvectors[:, :39]
-
-    return projection_matrix
+    return np.real(projection_matrix)
 ```
 
 #### Projecting The Train Data and Test Data using the Same Projection Matrix
@@ -332,12 +332,28 @@ def Test_LDA(k):
 </div>
 
 ### Variations
+---
 
 #### PCA Variant (Kernel PCA)
 
 - Kernel PCA is a non-linear dimensionality reduction technique that uses a kernel function to map high-dimensional data into a lower-dimensional space. This allows it to capture non-linear relationships between variables that are not possible with linear PCA.
 - The time complexity of normal PCA is O(d^3), where d is the number of dimensions, while the time complexity of kernel PCA is O(n^3), where n is the number of data points. The computation of the kernel matrix is the most computationally expensive step in kernel PCA.
 - Kernel PCA may be more accurate than normal PCA for datasets with non-linear relationships between variables, as it can capture these relationships. However, kernel PCA is more prone to overfitting than normal PCA, and the choice of kernel function can greatly affect the performance of kernel PCA.
+```python
+def Test_Polynomial_Kernel_PCA(no_of_components, k):
+    kpca = KernelPCA(n_components=no_of_components, kernel="poly")
+    X_train_kpca = kpca.fit_transform(X_train)
+    X_test_kpca = kpca.transform(X_test)
+    knn = KNeighborsClassifier(k, weights="distance")
+    knn.fit(X_train_kpca, y_train.ravel())
+    y_pred = knn.predict(X_test_kpca)
+    accuracy = accuracy_score(y_test, y_pred.ravel())
+    return accuracy
+```
+- Comparison Between Normal PCA and Kernel PCA
+
+![alt text](images/PCA_vs_kerneL_PCA.png)
+
 
 #### LDA Variant (Shrinkage LDA)
 
@@ -346,6 +362,131 @@ def Test_LDA(k):
 - This regularization is particularly useful when dealing with high-dimensional data, as it helps to overcome the small sample size problem by stabilizing the covariance estimates. Shrinkage LDA has been shown to outperform traditional LDA in terms of classification accuracy, especially when the number of features is much larger than the number of observations.
 
 - Another advantage of shrinkage LDA is that it can handle multicollinearity between the predictor variables, which can be a problem in standard LDA when the predictors are highly correlated. In summary, shrinkage LDA is a powerful tool for classification and dimensionality reduction that can improve the accuracy of LDA in high-dimensional and small sample size settings.
+```python
+def Test_Shrinkage_LDA(k):
+    lda = LinearDiscriminantAnalysis(solver="eigen", shrinkage="auto")
+    lda.fit(X_train, y_train.ravel())
+    X_train_projection = lda.transform(X_train)
+    X_test_projection = lda.transform(X_test)
+    knn = KNeighborsClassifier(n_neighbors=k)
+    knn.fit(X_train_projection, y_train.ravel())
+    y_pred = knn.predict(X_test_projection)
+    accuracy = accuracy_score(y_test, y_pred.ravel())
+    return accuracy
+```
+- Comparison Between Normal LDA & Shrinkage LDA
+
+![alt text](images/lda_vs_shrinkage_lda.png) 
+
+### Splitting The Dataset into 70% Training and 30% Testing
+---
+- The split function
+```python
+def split_data(data,labels):
+    bonus_x_train = np.zeros((280,10304))
+    bonus_x_test = np.zeros((120,10304))
+    bonus_y_train = np.zeros((280,1))
+    bonus_y_test = np.zeros((120,1))
+    # split each person's data into 7 training images and 3 testing images
+    for  i in range (40):
+        bonus_x_train[i*7:(i+1)*7] = data[i*10:i*10+7]
+        bonus_x_test[i*3:(i+1)*3] = data[i*10+7:i*10+10]
+        bonus_y_train[i*7:(i+1)*7] = labels[i*10:i*10+7]
+        bonus_y_test[i*3:(i+1)*3] = labels[i*10+7:i*10+10]
+    # shuffle the data
+    indices = np.arange(280)
+    np.random.shuffle(indices)
+    bonus_x_train = bonus_x_train[indices]
+    bonus_y_train = bonus_y_train[indices]   
+    return bonus_x_train,bonus_x_test,bonus_y_train,bonus_y_test
+```
+#### Comparison Between Ordinary Split and Train Split in PCA
+---
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Original Split</th>
+      <th>Bonus Split</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0.80</th>
+      <td>0.945</td>
+      <td>0.966667</td>
+    </tr>
+    <tr>
+      <th>0.85</th>
+      <td>0.94</td>
+      <td>0.958333</td>
+    </tr>
+    <tr>
+      <th>0.90</th>
+      <td>0.94</td>
+      <td>0.95</td>
+    </tr>
+    <tr>
+      <th>0.95</th>
+      <td>0.93</td>
+      <td>0.941667</td>
+    </tr>
+  </tbody>
+</table>
+</div>    
+
+![alt text](images/Bonus_PCA.png)
+- It is clear that after splitting the dataset to 70/30 the accuracy is better for all values of **alpha**
+
+#### Comparison Between Ordinary Split and Train Split in LDA
+---
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Original Split</th>
+      <th>Bonus Split</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>LDA</th>
+      <td>0.95</td>
+      <td>0.975</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+![alt text](images/Bonus_LDA.png)
 
 
 # Face vs. Non-Face Classification using PCA and LDA
@@ -549,3 +690,10 @@ def split_data(faces, faces_labels, non_faces,non_faces_labels,non_faces_count,a
     ![alt text](images/image-8.png)
 
     while the number of non-faces images in the training set increases the accuracy of the model increases as the number of non-faces images in the the test set fixed. So the model train on a lower number of non-faces images accoring to the test ones. 
+
+## Contributers
+- Mohamed Wael Mohamed
+<br>
+- Ahmed Samir Said
+<br>
+- Youssef Hossam Aboelwafa
