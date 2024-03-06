@@ -407,11 +407,9 @@ def split_data(data,labels):
     .dataframe tbody tr th:only-of-type {
         vertical-align: middle;
     }
-
     .dataframe tbody tr th {
         vertical-align: top;
     }
-
     .dataframe thead th {
         text-align: right;
     }
@@ -459,11 +457,9 @@ def split_data(data,labels):
     .dataframe tbody tr th:only-of-type {
         vertical-align: middle;
     }
-
     .dataframe tbody tr th {
         vertical-align: top;
     }
-
     .dataframe thead th {
         text-align: right;
     }
@@ -694,6 +690,8 @@ def split_data(faces, faces_labels, non_faces,non_faces_labels,non_faces_count,a
 ## Contributers
 - Mohamed Wael Mohamed
 <br>
+
 - Ahmed Samir Said
 <br>
+
 - Youssef Hossam Aboelwafa
